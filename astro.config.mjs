@@ -15,20 +15,21 @@ export default defineConfig({
         {
           icon: "github",
           label: "GitHub",
-          href: "https://github.com/withastro/starlight",
+          href: "https://github.com/macaujack/zkp-blogs",
         },
       ],
       sidebar: [
         {
-          label: "Guides",
-          items: [
-            // Each item here is one entry in the navigation menu.
-            { label: "Example Guide", slug: "guides/example" },
-          ],
+          label: "Getting Started",
+          link: "/",
         },
         {
-          label: "Reference",
-          autogenerate: { directory: "reference" },
+          label: "Foundational Math",
+          autogenerate: { directory: "math" },
+        },
+        {
+          label: "Groth16",
+          autogenerate: { directory: "groth16" },
         },
       ],
       head: [
