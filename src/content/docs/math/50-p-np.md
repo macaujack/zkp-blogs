@@ -3,7 +3,7 @@ title: P vs NP Problem
 description: An introduction to the P and NP problem, and its relation to zero-knowledge proofs.
 slug: p-vs-np
 sidebar:
-  order: 5000
+  order: 500
 ---
 
 We've probably heard about the P vs NP problem in computer science. But what exactly are P and NP? And what's the relation between these 2 classes of problems and zero-knowledge proofs?
