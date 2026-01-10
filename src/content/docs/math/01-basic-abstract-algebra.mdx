@@ -6,6 +6,8 @@ sidebar:
   order: 10
 ---
 
+import AccentSpan from '../../../components/AccentSpan.astro';
+
 Abstract algebra is a branch of mathematics that studies algebraic structures such as groups, rings, and fields. As a developer, I personally consider those algebraic structures similar to abstract classes, interfaces or traits in programming languages. First we define some common behaviors and properties of a structure. We can study those structures abstractly without caring about their concrete implementations. Then we can create concrete implementations of those structures later, and we can leverage the findings from abstract studies to reason about the concrete implementations.
 
 Here are some basic abstract algebra concepts that are commonly used in zero-knowledge proofs. There may be some mathematical terms that may seem unfamiliar but don't worry, these terms are just used to describe the properties of those algebraic structures precisely and concisely. It's not rocket science.
@@ -62,22 +64,34 @@ These are 4 algebraic structures that contain a set and a binary operator define
   - A set $M$ with a binary operator $\ast$ that is closed on $M$.
 - **Semigroup**: $(S, \ast)$. It's a Magma with associativity.
   - A set $S$ with a binary operator $\ast$ that is closed on $S$.
-  - <span style="color:blue">The binary operator $\ast$ is associative, i.e., for any $a, b, c \in S$, we have $(a \ast b) \ast c = a \ast (b \ast c)$.</span>
+  - <AccentSpan>
+      The binary operator $\ast$ is associative, i.e., for any $a, b, c \in S$,
+      we have $(a \ast b) \ast c = a \ast (b \ast c)$.
+    </AccentSpan>
 - **Monoid**: $(M, \ast)$. It's a semigroup with an identity element.
   - A set $M$ with a binary operator $\ast$ that is closed on $M$.
   - The binary operator $\ast$ is associative.
-  - <span style="color:blue">There exists an identity element $e \in M$ such that for any $a \in M$, we have $e \ast a = a \ast e = a$.</span>
+  - <AccentSpan>
+      There exists an identity element $e \in M$ such that for any $a \in M$, we
+      have $e \ast a = a \ast e = a$.
+    </AccentSpan>
 - **Group**: $(G, \ast)$. It's a monoid where every element has an inverse.
   - A set $G$ with a binary operator $\ast$ that is closed on $G$.
   - The binary operator $\ast$ is associative.
   - There exists an identity element $e \in G$ such that for any $a \in G$, we have $e \ast a = a \ast e = a$.
-  - <span style="color:blue">For every element $a \in G$, there exists an inverse element $a^{-1} \in G$ such that $a \ast a^{-1} = a^{-1} \ast a = e$.</span>
+  - <AccentSpan>
+      For every element $a \in G$, there exists an inverse element $a^{-1} \in
+      G$ such that $a \ast a^{-1} = a^{-1} \ast a = e$.
+    </AccentSpan>
 - **Abelian Group**: $(G, \ast)$. A group where the binary operator is also commutative.
   - A set $G$ with a binary operator $\ast$ that is closed on $G$.
   - The binary operator $\ast$ is associative.
   - There exists an identity element $e \in G$ such that for any $a \in G$, we have $e \ast a = a \ast e = a$.
   - For every element $a \in G$, there exists an inverse element $a^{-1} \in G$ such that $a \ast a^{-1} = a^{-1} \ast a = e$.
-  - <span style="color:blue">The binary operator $\ast$ is commutative, i.e., for any $a, b \in G$, we have $a \ast b = b \ast a$.</span>
+  - <AccentSpan>
+      The binary operator $\ast$ is commutative, i.e., for any $a, b \in G$, we
+      have $a \ast b = b \ast a$.
+    </AccentSpan>
 
 ## Ring & Field
 
@@ -98,7 +112,10 @@ Field properties:
 - Addition:
   - $(F, +)$ is an abelian group.
 - Multiplication:
-  - <span style="color:blue">$(F \setminus \{0\}, \cdot)$ is an abelian group. i.e., the set $F$ without the additive identity element (0) forms an abelian group under multiplication.</span>
+  - $(F, \cdot)$ is a semigroup.
   - Distributive property: For any $a, b, c \in R$, we have $a \cdot (b + c) = (a \cdot b) + (a \cdot c)$ and $(a + b) \cdot c = (a \cdot c) + (b \cdot c)$.
+  - <AccentSpan>$(F \setminus \{0\}, \cdot)$ is an abelian group. i.e., the set $F$ without the additive identity element (0) forms an abelian group under multiplication.</AccentSpan>
 
 A typical example of a ring is $(\mathbb{Z}, +, \cdot)$, the set of integers with standard addition and multiplication. It's a ring because it satisfies all the ring properties mentioned above. However, it's not a field because not every non-zero integer has a multiplicative inverse within the integers. (Actually only 1 and -1 have multiplicative inverses in integers.)
+
+A typical example of a field is $(\mathbb{R}, +, \cdot)$, the set of real numbers with standard addition and multiplication. It's a field because it satisfies all the field properties mentioned above. Every non-zero real number has a multiplicative inverse within the real numbers.
