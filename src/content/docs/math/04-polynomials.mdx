@@ -1,0 +1,124 @@
+---
+title: Polynomials (over Finite Fields)
+description: Introduction to polynomials, and polynomials over finite fields.
+slug: polynomials
+sidebar:
+  order: 40
+---
+
+import Img from "../../../components/Img.astro";
+import { Aside } from '@astrojs/starlight/components';
+
+We've already learned polynomials in high school and university. It's just something like $p(x) = 2x^3 + 3x^2 + 5x + 7$. In this post, we'll focus on polynomials over finite fields, which are heavily used in zero-knowledge proofs.
+
+## Polynomials over Finite Fields
+
+If each coefficient of a polynomial belongs to a finite field, and we do arithmetics in the finite field, we get a polynomial over a finite field. For example, consider the polynomial $p(x) = 2x^3 + 3x^2 + 5x + 7$ over finite field $\mathbb{F}_{11}$, we could evaluate it at $x = 2$ as follows:
+
+$$
+\begin{align*}
+p(2) & \equiv 2 \cdot 2^3 + 3 \cdot 2^2 + 5 \cdot 2 + 7 \\
+      & \equiv 2 \cdot 8 + 3 \cdot 4 + 10 + 7 \\
+      & \equiv 16 + 12 + 10 + 7 \\
+      & \equiv 45 \\
+      & \equiv 1
+\end{align*}
+$$
+
+Formally, the polynomial is defined as
+
+$$
+p(x) = \sum_{i=0}^{d} c_{i}x^{i}
+$$
+
+where $d$ is the degree of the polynomial (in our example above, $d = 3$), and each coefficient $c_i$ belongs to the finite field (in our example above, $c_3 = 2, c_2 = 3, c_1 = 5, c_0 = 7$ all belong to $\mathbb{F}_{11}$).
+
+Polynomials over finite fields share many properties with regular polynomials:
+
+- A polynomial of degree $d$ has at most $d$ roots, i.e., there are at most $d$ distinct values of $x$ such that $p(x) = 0$.
+- If we add two polynomials of degree $d_1$ and $d_2$, the resulting polynomial has a degree of at most $\max(d_1, d_2)$.
+- If we multiply two polynomials of degree $d_1$ and $d_2$, the resulting polynomial has a degree of $d_1 + d_2$, and the roots of the resulting polynomial include the roots of both original polynomials.
+
+Be aware that a polynomial who has real roots may not have roots in a finite field, and a polynomial who has no real root may have roots in a finite field. For example, the polynomial $p(x) = x^2 + 2$ has no real roots, but it has roots in the finite field $\mathbb{F}_{11}$ (specifically, the roots are 3 and 8).
+
+## Schwarz-Zippel Lemma
+
+We already know that a polynomial of degree $d$ has at most $d$ roots (no matter it's over real numbers or finite fields). The Schwarz-Zippel lemma states that if we randomly pick a point from a finite set, the probability that the polynomial evaluates to zero at that point is at most $\frac{d}{|S|}$, where $d$ is the degree of the polynomial, and $|S|$ is the size of the finite set. This is intuitive.
+
+This lemma is useful when we want to check if two polynomials $f(x)$ and $g(x)$ are equal. We can construct the third polynomial $h(x) = f(x) - g(x)$. If $f(x)$ and $g(x)$ are equal, then $h(x)$ is the zero polynomial (i.e., all coefficients are zero), which has infinite roots. If $f(x)$ and $g(x)$ are not equal, then $h(x)$ is a non-zero polynomial with degree at most $\max(\text{deg}(f), \text{deg}(g))$. According to the Schwarz-Zippel lemma, if we randomly pick a point from a finite set $S$ and evaluate $h(x)$ at that point, the probability that $h(x)$ evaluates to zero is at most $\frac{d}{|S|}$, where $d$ is the degree of $h(x)$. Therefore, if we evaluate both $f(x)$ and $g(x)$ at that point and find that they are equal, we can say with high probability that $f(x)$ and $g(x)$ are equal. By choosing a sufficiently large finite set, we can make this probability negligibly small.
+
+In a finite field, the field order is usually very large (e.g., around $2^{256}$), so we can achieve a very small probability of error.
+
+One may wonder why we want to use such an indirect way to check polynomial equality. After all, simply comparing coefficients takes $O(d)$ time. Evaluating polynomials at a point also takes $O(d)$ time. In later posts about zero-knowledge proof protocols, we'll revisit this topic.
+
+## Lagrange Interpolation
+
+(Both polynomials over real numbers and polynomials over finite fields support Lagrange interpolation. Here we explain the concept using polynomials over real numbers for better intuition.)
+
+We can choose 2 different points on a 2D plain and there's only one straight line that passes through both points. Similarly, we can choose 3 different points on a 2D plain and there's only one parabola (or a line if 3 points are on the same line) that passes through all 3 points. More generally, given $d + 1$ different points on a 2D plain, there is only one polynomial of degree at most $d$ that passes through all those points. This is known as Lagrange Interpolation.
+
+Formally, given $d + 1$ points $(x_0, y_0), (x_1, y_1), \ldots, (x_d, y_d)$ where all $x_i$ are distinct, the polynomial of degree at most $d$ that passes through all those points satisfies $p(x_i) = y_i$ for all $i = 0, 1, \ldots, d$.
+
+To do this, we need to first construct $d + 1$ basis polynomials $L_0(x), L_1(x), \ldots, L_d(x)$, where each basis polynomial $L_i(x)$ satisfies $L_i(x_j) = 1$ if $i = j$, and $L_i(x_j) = 0$ if $i \ne j$. (Note there's no constraint on the evaluations when $x$ is not one of the $x_j$.) Assume we have constructed those basis polynomials, then we can construct the polynomial $p(x)$ as follows:
+
+$$
+p(x) = \sum_{i=0}^{d} y_{i} L_{i}(x)
+$$
+
+Intuitively, $L_i(x)$ is used to "select" the $y_i$ value when $x = x_i$, and ignore all other $y_j$ values. Each $L_i(x)$ can be constructed as follows:
+
+$$
+L_i(x) = \prod_{j \ne i} \frac{x - x_j}{x_i - x_j}
+$$
+
+This is also very intuitive. If we treat this as a fractional polynomial (i.e., $\frac{\prod_{j \ne i} (x - x_j)}{\prod_{j \ne i} (x_i - x_j)}$), the numerator is just the **vanishing polynomial** of the set $\{x_j \mid j \ne i\}$. The vanishing polynomial evaluates to 0 at all $x$ values in the set, so when $x = x_j$ for any $j \ne i$, the numerator becomes 0, making $L_i(x_j) = 0$. When $x = x_i$, the numerator evaluates to $\prod_{j \ne i} (x_i - x_j)$, which is exactly the denominator, making $L_i(x_i) = 1$.
+
+Using Lagrange interpolation, we can encode a vector of real numbers into a polynomial. Given a vector of $n$ real numbers $[v_0, v_1, \ldots, v_{n-1}]$, we can construct a polynomial $p(x)$ of degree at most $n - 1$ such that $p(i) = v_i$ for all $i = 0, 1, \ldots, n - 1$. This polynomial can be constructed using the Lagrange interpolation. Note here we use $x$ values $0, 1, \ldots, n - 1$ to encode the vector indices, i.e., the points used to do Lagrange interpolation are $(0, v_0), (1, v_1), \ldots, (n - 1, v_{n-1})$. We can choose other distinct $x$ values as well (in fact we will soon).
+
+## Fundamental Theorem of Algebra
+
+The Fundamental Theorem of Algebra states that: every non-zero, single-variable, degree $d$ polynomial with **complex (including real)** coefficients has, counted with multiplicity, exactly $d$ **complex (including real)** roots.
+
+<Aside type="note">
+  Remember when we were students, we learned that a complex number is of the form $a + bi$, where $a$ and $b$ are real numbers, and $i$ is the imaginary unit with the property that $i^2 = -1$. A complex number can be represented as a point in a 2D plane, where the x-axis represents the real part and the y-axis represents the imaginary part. When $b = 0$, the complex number is actually a real number (i.e., the points on x-axis represent real numbers).
+</Aside>
+
+For example:
+
+- Degree 2 polynomial $p(x) = x^2 - 3x + 2 = (x - 1)(x - 2)$ has two roots: 1 and 2.
+- Degree 2 polynomial $p(x) = x^2 - 2x + 1 = (x - 1)^2$ has one distinct root: 1 (with multiplicity 2). So it still has 2 roots counted with multiplicity.
+- Degree 3 polynomial $p(x) = x^3 - 2x^2 + x = x(x - 1)^2$ has two distinct roots: 0 and 1 (with multiplicity 2). So it still has 3 roots counted with multiplicity.
+- Degree 2 polynomial $p(x) = x^2 + 1$ has no real roots, but it has two complex roots: $i$ and $-i$.
+- Degree 3 polynomial $p(x) = x^3 - 1 = (x - 1)(x^2 + x + 1)$ has three roots. Obviously one (real) root is 1. Apply the quadratic formula to $x^2 + x + 1 = 0$, we get the other two complex roots: $\frac{-1 \pm \sqrt{1 - 4}}{2} = \frac{-1 \pm i\sqrt{3}}{2}$
+
+Let's look closely at the last example $p(x) = x^3 - 1$. It turns out that the three roots of this polynomial are called the cube roots of unity. They can be represented in the complex plane as points on the unit circle (a circle with radius 1 centered at the origin). The three cube roots of unity are evenly spaced around the circle, each separated by an angle of $120^\circ$ (or $\frac{2\pi}{3}$ radians). Specifically, they are:
+
+<Img src="cube-roots-of-unity.svg" alt="Cube Roots of Unity" width={500} />
+
+If we generalize the polynomial to $p(x) = x^n - 1$, it has $n$ distinct complex roots called the n-th roots of unity, namely $1, \omega, \omega^2, \ldots, \omega^{n-1}$, where $\omega = e^{\frac{2\pi i}{n}}$. These roots can also be represented as points on the unit circle in the complex plane, evenly spaced around the circle, each separated by an angle of $\frac{2\pi}{n}$ radians.
+
+<Aside type="note">
+  We already know a complex number $z$ can be represented as a point in a 2D plane. If we use polar coordinates to represent the point, then $z$ can be expressed as $z = r(\cos \theta + i \sin \theta)$, where $r$ is the distance from the origin to the point, and $\theta$ is the angle between the positive x-axis and the line connecting the origin to the point.
+
+  Euler's formula states that for any real number $\theta$, $e^{i\theta} = \cos \theta + i \sin \theta$. Using this formula, we can rewrite the polar representation of a complex number as $z = re^{i\theta}$.
+</Aside>
+
+## Lagrange Interpolation with Roots of Unity
+
+If we do Lagrange interpolation naively with $d + 1$ points, the time complexity is $O(d^2)$.
+
+However, if the $x$ values of the $d + 1$ points are chosen to be the $(d + 1)\text{th}$ roots of unity, we can use the Fast Fourier Transform (FFT) to optimize the time complexity to only $O(d \log d)$ time. FFT won'be be covered in this post. We only need to know that using roots of unity as $x$ values can significantly speed up polynomial interpolation.
+
+Therefore, when encoding a vector of $n$ real numbers into a polynomial using Lagrange interpolation, we often choose the $x$ values to be the $n\text{th}$ roots of unity: $1, \omega, \omega^2, \ldots, \omega^{n-1}$ where $\omega = e^{\frac{2\pi i}{n}}$. So the points are $(1, v_0), (\omega, v_1), (\omega^2, v_2), \ldots, (\omega^{n-1}, v_{n-1})$. This allows us to efficiently evaluate the polynomial at multiple points using FFT.
+
+As a tip, since the roots of unity are roots of the polynomial $x^n - 1$, the vanishing polynomial of the set of $n\text{th}$ roots of unity is simply $Z(x) = x^n - 1$. This is just how "roots of unity" are defined. This is really useful in zero-knowledge proof protocols.
+
+## Roots of Unity in Finite Fields
+
+In real numbers, we always have $n$ distinct $n\text{th}$ roots of unity for any positive integer $n$. However, in finite fields, this is not always the case. For example, in the finite field $\mathbb{F}_{11}$, the polynomial $x^3 - 1$ has only one root: 1.
+
+Actually, in a finite field $\mathbb{F}_p$ (where $p$ is a prime number), the polynomial $f(x) = x^n - 1$ has exactly $n$ distinct roots if and only if $n$ divides $p - 1$. In the example, since 3 does not divide 10 (i.e., $11 - 1$), the polynomial $f(x) = x^3 - 1$ has less than 3 distinct roots in $\mathbb{F}_{11}$.
+
+If the polynomial is $f(x) = x^5 - 1$, since 5 divides 10, the polynomial has exactly 5 distinct roots in $\mathbb{F}_{11}$, namely $1, 3, 4, 5, 9$.
+
+When working with polynomials over finite fields in zero-knowledge proofs, we often choose the size of the finite field and the degree of the polynomial carefully to ensure that roots of unity exist for efficient polynomial interpolation using FFT. We'll revisit this topic in later posts.
