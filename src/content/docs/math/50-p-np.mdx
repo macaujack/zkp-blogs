@@ -6,6 +6,8 @@ sidebar:
   order: 500
 ---
 
+import { Aside, Steps } from '@astrojs/starlight/components';
+
 We've probably heard about the P vs NP problem in computer science. But what exactly are P and NP? And what's the relation between these 2 classes of problems and zero-knowledge proofs?
 
 ## Definition of P and NP
@@ -13,7 +15,11 @@ We've probably heard about the P vs NP problem in computer science. But what exa
 After chatting with AI and some googling, it turns out that:
 
 - **P (Polynomial time)**: - The class of decision problems that can be **solved in polynomial time** by a deterministic algorithm. This means the time complexity of the algorithm should be bounded by a polynomial function of the size of the input, like $O(n)$, $O(n^2)$, $O(n \log n)$, etc.
-- **NP (Nondeterministic Polynomial time)**: The class of decision problems for which a given solution can be **verified in polynomial time** by a deterministic algorithm.
+- **NP (Nondeterministic Polynomial time)**: The class of decision problems for which a given solution can be **verified in polynomial time** by a deterministic algorithm. We don't care how long it takes to find the solution. We only care about how long it takes to verify the solution once we have it.
+
+<Aside type="note">
+  "NP" is never interpreted as "Not Polynomial time". If a problem is in NP, it doesn't mean it cannot be solved in polynomial time. Again, we only care about the verification time here.
+</Aside>
 
 Obviously, if a problem is in P, it is also in NP, because if we can solve a problem efficiently (i.e., in polynomial time), we can certainly verify the solution efficiently as well, because we can at least solve the problem (which can be done efficiently) again to check if the solution is correct. Therefore, we have the relationship: $P \subseteq NP$.
 
@@ -31,8 +37,102 @@ We said NP is the class of decision problems for which a **given solution** can 
 
 In a sorting problem, the witness is the sorted array itself. In a Sudoku problem, the witness is the completed Sudoku grid.
 
-This term is widely used in the context of zero-knowledge proofs. In a zero-knowledge proof, the prover wants to convince the verifier that they know a valid witness for a certain problem without revealing the witness itself. For example, in a Sudoku zero-knowledge proof, the prover wants to convince the verifier that they know a valid completed Sudoku grid (the witness) without actually revealing the grid. Another example is the famous Tornado Cash, where the prover (user) wants to convince the verifier (smart contract) that they know a secret note (the witness) that corresponds to a deposit made earlier, without revealing the secret note itself.
+This term is widely used in the context of zero-knowledge proofs. In a zero-knowledge proof protocol, the prover wants to convince the verifier that they know a valid witness for a certain problem without revealing the witness itself. For example, in a Sudoku zero-knowledge proof, the prover wants to convince the verifier that they know a valid completed Sudoku grid (the witness) without actually revealing the grid. Another example is the famous Tornado Cash, where the prover (user) wants to convince the verifier (smart contract) that they know a secret note (the witness) that corresponds to a deposit made earlier, without revealing the secret note itself.
 
-## Relation with ZKP
+So "zero-knowledge" means the verifier learns nothing about the witness, while still being convinced that the prover knows a valid witness.
 
-{/* TODO */}
+## Boolean Circuits
+
+We've probably heard about AND gate, OR gate, etc, in digital circuit design. A boolean circuit is similar to this. It's a mathematical model for digital circuits. Each signal in the circuit can take only 2 values: true (1) or false (0). We can only use AND, OR and NOT to wire up the circuit.
+
+Let's consider a 3-coloring problem. Given a map, we should find a way to color each region with 3 colors such that no 2 adjacent regions have the same color. Instead of solving this problem, we care about how to verify a given coloring solution. It's easy. We can construct a graph, where each node represents a region, and each edge represents adjacency between 2 regions. Then for each edge, we check if the colors of the 2 nodes it connects are different. If all edges pass the check, the coloring solution is valid.
+
+But we would want to do this verification using a boolean circuit. Let's say there are $n$ nodes and $m$ edges in this graph. In the following steps, the symbols for AND, OR, and NOT are $\land, \lor, \lnot$ respectively.
+
+<Steps>
+
+1. For each node $i$, we create 3 signals: $r_i, g_i, b_i$, representing whether node $i$ is colored red, green, or blue, respectively. We need to ensure that exactly one of these signals is true for each node. This can be encoded to a constraint as:
+
+   $$(r_i \land \lnot g_i \land \lnot b_i) \lor (\lnot r_i \land g_i \land \lnot b_i) \lor (\lnot r_i \land \lnot g_i \land b_i)$$
+
+   That is, either red is true and the other 2 are false, or green is true and the other 2 are false, or blue is true and the other 2 are false.
+
+2. For each edge that connects node $i$ and node $j$, we need to ensure that the colors of the 2 nodes are different. This can be encoded to a constraint as:
+
+   $$\lnot (r_i \land r_j) \land \lnot (g_i \land g_j) \land \lnot (b_i \land b_j)$$.
+
+   That is, two adjacent nodes cannot both be red, and cannot both be green, and cannot both be blue.
+
+3. For each node, there's a constraint from step 1. For each edge, there's a constraint from step 2. We can combine all these constraints using AND to form a big boolean circuit. The output of the circuit is true if and only if all constraints are satisfied, meaning the coloring solution is valid.
+
+</Steps>
+
+When verifying a given solution, we simply plug in the values of all $r_i, g_i, b_i$ signals according to the coloring solution, and evaluate the circuit. If the output is true, the solution is valid; otherwise, it's invalid.
+
+It turns out that any problem in NP can be reduced to 3-SAT problem (you could google it if you are interested), which could be easily represented using boolean circuits.
+
+**Zero-knowledge proofs only work with problems in NP. If a problems is not in NP (like the optimal chess move problem mentioned above), there's no way to verify the solution efficiently. Zero-knowledge proofs are not magic that can suddenly make these problems verifiable in polynomial time.**
+
+## Arithmetic Circuits
+
+Boolean circuits are great, but the circuit size can be huge for a simple arithmetic operation like addition. For example, to add 2 integers, we need to first convert them to binary representation, then for each bit, we need to use multiple AND, OR, and NOT gates to compute the sum and carry bits. This can lead to a large circuit size.
+
+Since most real world problems involve arithmetic operations, we would want to use arithmetic circuits instead. Throughout this blog, the arithmetic circuits are over a finite field. This means that all signals in the circuit take values from a finite field. There are only 2 operations allowed in arithmetic circuits: addition and multiplication.
+
+Here's a simple example of arithmetic circuits, where there are 2 constraints:
+
+$$
+\begin{align*}
+x + y & = 8 \\
+xy &= 15
+\end{align*}
+$$
+
+If we plug in $x = 3$ and $y = 5$, both constraints are satisfied, and the circuit is satisfied.
+
+Here's the comparison between boolean circuits and arithmetic circuits:
+
+| Boolean Circuit | Arithmetic Circuit |
+|:-|:-|
+| Signals are 0 and 1 | Signals are elements in a finite field |
+| Operations are AND, OR, NOT | Operations are addition and multiplication |
+| Satisfied when output is 1 (true) | Satisfied when all constraints are satisfied |
+| Witness is assignment of boolean values to signals | Witness is assignment of field elements to signals |
+
+Let's encode the 3-coloring problem using arithmetic circuits. This time, for each node $i$, there's only 1 signal $c_i$, representing the color of node $i$. Each $c_i$ can be 1, 2, or 3, representing red, green, or blue, respectively.
+
+<Steps>
+
+1. For each node $i$, we need to ensure that $c_i$ is either 1, 2, or 3. This can be encoded to a constraint as:
+
+   $$(c_i - 1)(c_i - 2)(c_i - 3) = 0$$
+
+   Recall that subtraction in a finite field is just addition with the additive inverse.
+
+2. For each edge that connects node $i$ and node $j$, we need to ensure that the colors of the 2 nodes are different. Note that each constraint in arithmetic circuits is an equation, so we cannot write something like $c_i \neq c_j$.
+
+   Observe that if $c_i = c_j$, then all possible values of $c_i c_j$ are 1, 4 and 9. If $c_i \neq c_j$, then all possible values of $c_i c_j$ are 2, 3 and 6. They don't overlap. Therefore to say $c_i \neq c_j$ is the same as saying $c_i c_j$ is 2, 3 or 6.
+
+   $$(c_i c_j - 2)(c_i c_j - 3)(c_i c_j - 6) = 0$$
+
+</Steps>
+
+When verifying a given coloring solution, we simply plug in the values of all $c_i$ signals according to the coloring solution, and check if all constraints are satisfied. If they are, the solution is valid; otherwise, it's invalid.
+
+## Model Boolean Circuits Using Arithmetic Circuits
+
+| | Boolean Circuit | Arithmetic Circuit |
+|:-|:-|:-|
+| AND gate | $z = x \land y$ | $$x(x - 1) = 0 \\ y(y - 1) = 0 \\ z = xy $$ |
+| NOT gate | $z = \lnot x$ | $$x(x - 1) = 0 \\ z = 1 - x $$ |
+| OR gate | $z = x \lor y$ | $$x(x - 1) = 0 \\ y(y - 1) = 0 \\ z = x + y - xy $$ |
+
+Since any problem in NP can be represented using boolean circuits, and boolean circuits can be modeled using arithmetic circuits, it follows that any problem in NP can also be represented using arithmetic circuits.
+
+Since it's really important, we emphasize it again: **The arithmetic circuits is made up of a set of constraints (equations). It's satisfied when all constraints are satisfied. The equal sign "$=$" never means assignment in programming languages.**
+
+## Summary
+
+All zero-knowledge proof protocols serve the same purpose: given an public arithmetic circuit that all parties agree on, the prover wants to convince the verifier that they know a valid witness (i.e., an assignment of all signals in the circuits that satisfies all constraints) without making the verifier learn anything about the witness itself.
+
+This blog mainly focuses on how the prover can convince the verifier. We don't talk too much about how to construct the arithmetic circuits for specific problems.
