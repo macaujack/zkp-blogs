@@ -1,0 +1,25 @@
+---
+interface Props {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+}
+
+const { src, alt, width, height } = Astro.props as Props;
+
+const [actualWidth, actualHeight] =
+  width || height ? [width, height] : [300, 100];
+
+const actualSrc = src.startsWith("http")
+  ? src
+  : `${import.meta.env.BASE_URL}/${src}`;
+---
+
+<img
+  src={actualSrc}
+  alt={alt}
+  width={actualWidth}
+  height={actualHeight}
+  style="margin-left: auto; margin-right: auto;"
+/>

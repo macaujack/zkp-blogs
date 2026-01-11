@@ -12,7 +12,13 @@ We already know that all real numbers $\mathbb{R}$ under standard addition and m
 
 ## Finite Fields
 
-A finite field (also known as a Galois field) is a field that contains a finite number of elements. It's denoted as $\mathbb{F}_{p^n}$, where $p$ is a prime number and $n$ is a positive integer. As a conclusion, the order (number of elements) of the field is $p^n$. When $n=1$, we also denote the field as $\mathbb{F}_p$, and it has $p$ elements. We'll only work with this case first. Later when talking about elliptic curve pairings, we'll revisit the case where $n > 1$.
+A finite field (also known as a Galois field) is a field that contains a finite number of elements. It's denoted as $\mathbb{F}_{p^n}$, where $p$ is a prime number and $n$ is a positive integer. The order (number of elements) of the field is $p^n$.
+
+<Aside type="note">
+    So the order of a finite field is always a power of a prime number. It cannot be any arbitrary positive integer. For example, there is no finite field with 6 elements because 6 is not a power of a prime number.
+</Aside>
+
+When $n=1$, we also denote the field as $\mathbb{F}_p$, and it has $p$ elements. We'll only work with this case first. Later when talking about "elliptic curve pairings", we'll revisit the case where $n > 1$.
 
 For example, $\mathbb{F}_7$ is the finite field with 7 elements: $\{0, 1, 2, 3, 4, 5, 6\}$.
 
@@ -21,8 +27,10 @@ Recall that $(\mathbb{R},+,\cdot)$ is a field. It has two operations: addition a
 Similarly, in the finite field $\mathbb{F}_p$, we can also perform addition, subtraction, multiplication, and division (except by zero). However, all operations are performed modulo $p$. The addition and multiplication rules are straightforward:
 
 $$
+\begin{align*}
 a + b \equiv (a + b) \mod p \\
 a \cdot b \equiv (a \cdot b) \mod p
+\end{align*}
 $$
 
 <Aside type="note">
@@ -32,8 +40,10 @@ $$
 For example, in $\mathbb{F}_7$:
 
 $$
+\begin{align*}
 3 + 5 \equiv 1 \mod 7 \\
 4 \cdot 6 \equiv 3 \mod 7
+\end{align*}
 $$
 
 Remember subtraction is essentially adding the additive inverse. The additive inverse of an element $a$ in $\mathbb{F}_p$ is very intuitive: it's just $p - a$. For example, in $\mathbb{F}_7$, the additive inverse of 2 is $7 - 2 = 5$. We can verify that $2 + 5 \equiv 0 \mod 7$. Since the additive inverse of 2 is 5, when we subtract 2 from an element, we are essentially adding 5 to it. This is really intuitive (imagine a clock with 7 hours).
@@ -41,8 +51,10 @@ Remember subtraction is essentially adding the additive inverse. The additive in
 Division is a little bit tricky. To divide by an element $a$ (where $a \neq 0$), we need to multiply by its multiplicative inverse. The multiplicative inverse of an element $a$ in $\mathbb{F}_p$ is an element $b$ such that $a \cdot b \equiv 1 \mod p$. We also denote the multiplicative inverse of $a$ as $a^{-1}$. For example, in $\mathbb{F}_7$, the multiplicative inverse of 2 is 4 because $2 \cdot 4 \equiv 8 \equiv 1 \mod 7$. So when dividing an element by 2, we are essentially multiplying it by 4.
 
 $$
+\begin{align*}
 6 / 2 \equiv 6 \cdot 4 \equiv 24 \equiv 3 \mod 7 \\
 5 / 2 \equiv 5 \cdot 4 \equiv 20 \equiv 6 \mod 7
+\end{align*}
 $$
 
 Note "normally" 5 is an odd number and it cannot be divided by 2. However, in the finite field, we can always find the multiplicative inverse of any non-zero element (by the definition of a field), so division is always possible. **Always remember division is essentially multiplying by the multiplicative inverse, and subtraction is essentially adding the additive inverse.**
@@ -68,3 +80,7 @@ Here is a table comparing arithmetics in real numbers $\mathbb{R}$ and finite fi
 | $a \cdot b \neq 0 \iff$ both $a$ and $b$ are non-zero | $a \cdot b \neq 0 \iff$ both $a$ and $b$ are non-zero |
 | If $a^2 = b$, then $(-a)^2 = b$ | If $a^2 \equiv b \mod 7$, then $(-a)^2 \equiv b \mod 7$ |
 | ... | ... |
+
+## Isomorphism Again
+
+When we are talking about finite fields (with prime order), we always use the set of integers modulo a prime number $p$, i.e., $\{0, 1, 2, \ldots, p-1\}$. This is because any finite field (with prime order) is isomorphic to this set with addition and multiplication defined modulo $p$.

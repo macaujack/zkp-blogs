@@ -32,6 +32,8 @@ We can also define sets using set-builder notation. For example, the set of all 
 
 A Cartesian product of two sets $A$ and $B$ (can be the same and can be different), denoted as $A \times B$, is the set of all ordered pairs $(a, b)$ where $a \in A$ and $b \in B$ (i.e., $A \times B = \{(a, b) \mid a \in A, b \in B\}$). For example, if $A = \{1, 2\}$ and $B = \{x, y\}$, then the Cartesian product $A \times B = \{(1, x), (1, y), (2, x), (2, y)\}$.
 
+A Cartesian product between a set $A$ and itself could be denoted as $A^2$. So $\mathbb{R}^2$ is the set of all ordered pairs of real numbers, and $\mathbb{R}^3$ is the set of all ordered triplets of real numbers.
+
 A set $A$ is a subset of a set $B$ if and only if every element of $A$ is also an element of $B$. We denote this as $A \subseteq B$. Note for any set $A$, we have $A \subseteq A$.
 
 For other basic concepts about sets, you could ask AI or google it.
@@ -119,3 +121,16 @@ Field properties:
 A typical example of a ring is $(\mathbb{Z}, +, \cdot)$, the set of integers with standard addition and multiplication. It's a ring because it satisfies all the ring properties mentioned above. However, it's not a field because not every non-zero integer has a multiplicative inverse within the integers. (Actually only 1 and -1 have multiplicative inverses in integers.)
 
 A typical example of a field is $(\mathbb{R}, +, \cdot)$, the set of real numbers with standard addition and multiplication. It's a field because it satisfies all the field properties mentioned above. Every non-zero real number has a multiplicative inverse within the real numbers.
+
+## Homomorphism & Isomorphism
+
+A **homomorphism** is a structure-preserving map between two algebraic structures (like groups, rings, fields, etc). It's a special kind of function (function is introduced above). Consider two groups $(G, \ast)$ and $(H, \circ)$. A function $f: G \to H$ is a group homomorphism if for all $a, b \in G$, we have $f(a \ast b) = f(a) \circ f(b)$. In plain English, this means that applying the group operation in $G$ and then mapping the result to $H$ is the same as first mapping the elements to $H$ and then applying the group operation in $H$.
+
+For example, if $G = (\mathbb{R}^2, \text{component-wise addition})$, and $H = (\mathbb{R}, +)$, then the function $f: \mathbb{R}^2 \to \mathbb{R}$ defined by $f(x, y) = x + y$ is a group homomorphism because it preserves the group operation (i.e., it maps a 2D point on the plane to a real number by summing its coordinates). It's easy to prove that $f((x_1, y_1) + (x_2, y_2)) = f(x_1, y_1) + f(x_2, y_2)$.
+
+An **isomorphism** is a special type of homomorphism (hence structure-preserving) that is bijective (one-to-one and onto).
+
+- A function $f: A \to B$ is **one-to-one** (or injective) if different elements in set $A$ map to different elements in set $B$. In other words, if $f(a_1) = f(a_2)$, then it must be the case that $a_1 = a_2$. For example, the function $f: \mathbb{Z} \to \mathbb{Z}$ defined by $f(x) = 2x$ is one-to-one because different integers map to different even integers.
+- A function $f: A \to B$ is **onto** (or surjective) if every element in set $B$ has at least one element in set $A$ that maps to it. The example function above is not surjective because odd integers in set $B$ do not have any corresponding integers in set $A$ that map to them.
+
+An isomorphism must be both one-to-one and onto. If there exists an isomorphism $f: G \to H$, then $G$ and $H$ are structurally identical. We'll revisit isomorphisms in later posts.

@@ -1,0 +1,165 @@
+---
+title: Elliptic Curves (over Finite Fields)
+description: Introduction to elliptic curves, and elliptic curves over finite fields.
+slug: elliptic-curves
+sidebar:
+  order: 30
+---
+
+import Img from '../../../components/Img.astro';
+import { Aside } from '@astrojs/starlight/components';
+
+Elliptic curves are widely used in cryptography. Almost all popular blockchains use elliptic curves. Some zero-knowledge proof systems also use elliptic curves. Let's first explore what elliptic curves are, and then we will see how elliptic curves over finite fields work.
+
+## Elliptic Curves
+
+An elliptic curve is defined by an equation of the form:
+
+$$
+y^2 = x^3 + ax + b
+$$
+
+One of the most famous example is k-256 (secp256k1) used in Bitcoin and Ethereum:
+
+$$
+y^2 = x^3 + 7
+$$
+
+<Img src="k256.svg" alt="K256 Curve" />
+
+The point $(2, \sqrt{15})$ lies on the elliptic curve, because the coordinates satisfy k-256 curve equation. You can plug in $x=2$ and $y=\sqrt{15}$ to verify it. Point $(2, -\sqrt{15})$ also lies on the curve. In fact, if a point $(x, y)$ lies on the curve, then the point $(x, -y)$ also lies on the curve. This is very intuitive.
+
+So what's the fun part of elliptic curves? For now it only looks like a normal curve.
+
+## Elliptic Curve Point Addition
+
+A quick recap on abelian groups from previous posts:
+
+- **Abelian Group**: $(G, \ast)$. A group where the binary operator is also commutative.
+  - A set $G$ with a binary operator $\ast$ that is closed on $G$.
+  - The binary operator $\ast$ is associative.
+  - There exists an identity element $e \in G$ such that for any $a \in G$, we have $e \ast a = a \ast e = a$.
+  - For every element $a \in G$, there exists an inverse element $a^{-1} \in G$ such that $a \ast a^{-1} = a^{-1} \ast a = e$.
+  - The binary operator $\ast$ is commutative, i.e., for any $a, b \in G$, we have $a \ast b = b \ast a$.
+
+Actually, all points on an elliptic curve (along with a special point called the "point at infinity", will be explained later) form an abelian group under a special addition operation called "elliptic curve point addition".
+
+### Addition of Two Different Points
+
+Visually, the elliptic curve point addition works like this, which demonstrates $A + B = C$.
+
+<Img src="ec-addition0.svg" alt="Elliptic Curve Point Addition 0" width={500} />
+
+That is, we first draw a line that passes through points $A$ and $B$. This line will intersect the elliptic curve at a third point (let's call it $C'$ **for now**). Then we reflect point $C'$ across the x-axis to get point $C$. The result of the addition $A + B$ is point $C$.
+
+Algebraically, if $A = (x_1, y_1)$ and $B = (x_2, y_2)$, then the coordinates of point $C = A + B = (x_3, y_3)$ can be computed as follows:
+
+$$
+\begin{align*}
+m = \frac{y_2 - y_1}{x_2 - x_1} \\
+x_3 = m^2 - x_1 - x_2 \\
+y_3 = m(x_1 - x_3) - y_1
+\end{align*}
+$$
+
+### Addition of a Point to Itself
+
+Imagine point $B$ moves closer and closer to point $A$. When $B$ coincides with $A$, we have to change our way of drawing the line. Instead of drawing a line through two different points, we draw the tangent line at point $A$. This is intuitive.
+
+<Img src="ec-addition1.svg" alt="Elliptic Curve Point Addition 1" width={500} />
+
+Note we denote the result of $A + A$ as $2A$. This looks like a multiplication between a scalar and a point, but **it's just a short notation for repeated addition**. So $2A$ means $A + A$, $3A$ means $A + A + A$, and so on. Remember there is only one binary operation defined on a group, which takes two elements from the group and produces another element from the group.
+
+Algebraically, if $A = (x_1, y_1)$, then the coordinates of point $C = 2A = (x_3, y_3)$ can be computed as follows:
+
+$$
+\begin{align*}
+m = \frac{3x_1^2 + a}{2y_1} \\
+x_3 = m^2 - 2x_1 \\
+y_3 = m(x_1 - x_3) - y_1
+\end{align*}
+$$
+
+### Addition of a Point to the Point at Infinity
+
+Image point $B$ moves farther and farther away from point $A$. When $B$ goes to infinity, the line passing through points $A$ and $B$ becomes a vertical line. Therefore, the intersection point $C'$ is the reflection of point $A$ across the x-axis. To get the result point $C$, we need to reflect point $C'$ again across the x-axis, which gives us back point $A$.
+
+<Aside type="note">
+    The elliptic curve equation could be re-written as $y = \pm\sqrt{x^3 + ax + b}$. Let's say $f(x) = \sqrt{x^3 + ax + b}$. Note that $f(x)$ is $O(x^{1.5})$. We use the big O notation here similar to describing algorithm time complexity. Intuitively, this means y grows faster than x as x approaches infinity. So when point $B$ goes to infinity, the line passing through points $A$ and $B$ becomes a vertical line.
+</Aside>
+
+Remember a group must have an identity element $e$ such that for any element $a$ in the group, we have $e + a = a + e = a$. In the case of elliptic curve point addition, **this point at infinity serves as the identity element. We usually denote it as $\mathcal{O}$.**
+
+Also note that the line passing a point and its reflection across the x-axis is always a vertical line, which will intersect the elliptic curve at the point at infinity $\mathcal{O}$. **Therefore, for any point $A$ on the elliptic curve, we have $A + (-A) = \mathcal{O}$, where $-A$ is the reflection of point $A$ across the x-axis.**
+
+<Aside type="note">
+    The point at infinity $\mathcal{O}$ cannot be represented with "normal" coordinates (or "affine coordinates" to be more precise) we used, which makes it kind of abstract. But how does it work in practice? In implementations, we usually use another coordinate system called "projective coordinates" to represent points on elliptic curves, which is out of scope for this post. In projective coordinates, the point at infinity is just a normal point like others.
+</Aside>
+
+## Elliptic Curves over Finite Fields
+
+Now we have understood how elliptic curve point addition works over real numbers. But in cryptography, we don't like real numbers. So we will use elliptic curves over finite fields instead. The equation of the elliptic curve remains the same, but the arithmetics of the coordinates are done modulo a prime number.
+
+For example, the k-256 curve over the finite field $\mathbb{F}_{13}$ is defined as:
+
+$$
+y^2 \equiv x^3 + 7 \mod 13
+$$
+
+We can verify that point $(7, 5)$ and $(7, 8)$ (Note 8 is congruent to -5) lies on this elliptic curve:
+
+$$
+\begin{align*}
+7^3 + 7 \equiv 350 \equiv 12 \mod 13 \\
+5^2 \equiv 25 \equiv 12 \mod 13 \\
+8^2 \equiv 64 \equiv 12 \mod 13
+\end{align*}
+$$
+
+In fact, all points on this elliptic curve over $\mathbb{F}_{13}$ are: $(7, 5)$, $(7, 8)$, $(8, 5)$, $(8, 8)$, $(11, 5)$, $(11, 8)$, and the point at infinity $\mathcal{O}$. There are a total of 7 points.
+
+Now comes an important conclusion: **All points on an elliptic curve over a finite field (along with the point at infinity) also form an abelian group under elliptic curve point addition defined above, where all arithmetics are done in the finite field.** This means when we compute the result of point addition, we are still using the same formulas to compute the $(x_3, y_3)$ coordinates, but all additions, subtractions, multiplications, and divisions are done in the finite field.
+
+In our example, there are a total of 7 points on the k-256 curve over $\mathbb{F}_{13}$, so we say the order of this elliptic curve group is 7. **Be aware that the order of an elliptic curve group is different from the order of the underlying finite field.** Here the order of the finite field $\mathbb{F}_{13}$ is 13, while the order of the elliptic curve group is 7.
+
+## Cyclic Groups
+
+A cyclic group $(G, \ast)$ is a special type of group that can be generated by a single element called a generator $g \in G$. This means that every element in the group can be expressed as repeated applications of the group operation on the generator, i.e., $G = \{g, g \ast g, g \ast g \ast g, \ldots\}$.
+
+As a conclusion, a cyclic group has the following properties:
+
+- A cyclic group is always abelian. So a cyclic group is a special type of abelian group.
+- If the cyclic group is infinite, it's isomorphic to the group of integers under addition $(\mathbb{Z}, +)$.
+- If the cyclic group is finite with order $n$, it's isomorphic to the group of integers modulo $n$ under addition $(\mathbb{Z}_n, +)$. (Note here $n$ doesn't have to be a prime number or power of a prime.)
+
+Another conclusion is: for any group, if the group is finite with a prime order $p$, then this group is cyclic, and any non-identity element can serve as a generator.
+
+Let's go back to our example of the k-256 curve over $\mathbb{F}_{13}$, which has a total of 7 points (order 7). Since 7 is a prime number, this elliptic curve group is cyclic. We can pick any non-identity point as the generator. Let's pick point $G = (7, 5)$ as the generator. Then all points in this elliptic curve group can be generated by repeatedly adding point $G$ to itself: $\{0G, G, 2G, 3G, 4G, 5G, 6G\}$. Note $0G$ is the point at infinity $\mathcal{O}$.
+
+<Aside type="note">
+    In elliptic curve cryptography, we usually denote the generator point as $G$. It's the same letter often used to denote groups. Don't get confused.
+</Aside>
+
+In practice, elliptic curves are defined over a much much larger finite field, and we often require the order of the elliptic curve group to be prime (for many reasons). For example, in k-256 used by Bitcoin and Ethereum, the order of finite field $p = 2^{256} - 2^{32} - 977 \approx 1.158 \times 10^{77}$, and the order of the elliptic curve group $n \approx 1.158 \times 10^{77}$ is also a large prime number. Remember the order of the elliptic curve group is different from the order of the underlying finite field (i.e., $n \neq p$).
+
+<Aside type="note">
+    The order of the elliptic curve group is not necessarily prime. For example, the popular ed25519 curve used in many applications (e.g., Solana) has an elliptic curve group order which is a large composite number. When in such case, we usually work with a large prime-order **subgroup** of the elliptic curve group for cryptographic applications. This is out of scope for this post.
+</Aside>
+
+## Discrete Logarithm Problem
+
+A high school student can easily compute $\log_{10} 1000 = 3$ because $10^3 = 1000$. A university student knows how to compute logarithms using Taylor series or other numerical methods. Most programming languages offer library functions to compute logarithms efficiently.
+
+However, that is in a world of real numbers, where everything is continuous. In the world of finite fields and elliptic curve groups, things are discrete. If you plot all the points on an elliptic curve over a finite field, you will see isolated dots instead of a smooth curve, and those dots are in disorder without any obvious pattern.
+
+Let's first look at the discrete logarithm problem in finite fields. Given a finite field $\mathbb{F}_p$, an $a \in \mathbb{F}_p$, and a positive integer $b$, could we efficiently compute $a^b$? We can use the fast power trick to achieve $O(\log b)$ time complexity (You can try [this Leetcode problem](https://leetcode.com/problems/count-good-numbers/description/) if you are interested). Basically, we leverage the finding that $a^b \equiv a^{\frac{b}{2}} \cdot a^{\frac{b}{2}} \equiv \dots$.
+
+However, the reverse problem is much harder. Given $a, c \in \mathbb{F}_p$, can you efficiently find $b$ such that $a^b \equiv c \mod{p}$? This is known as the discrete logarithm problem in finite fields. It's not as easy as computing $\log_{a} c$ in real numbers. There are some algorithms like Baby-step Giant-step that can achieve $O(\sqrt{p})$ time complexity. When $p$ is very large, this time complexity would be impractical at all.
+
+It's the same in elliptic curve groups. Given an elliptic curve group, a point $G$ (the generator), and a positive integer $k$, we can efficiently compute the point $P = kG$ using the same idea of fast power. However, given the point $G$ and another point $P$, we cannot efficiently find the integer $k$ such that $P = kG$. 
+
+<Aside>
+By convention the elliptic curve point operation is described as an addition (not multiplication), so here it seems that we are finding a quotient instead of a logarithm. In finite fields, the result of power is computed by repeated multiplication, while in elliptic curve groups, the result of scalar multiplication is computed by repeated addition. They have common structure, so we still call it the discrete logarithm problem.
+</Aside>
+
+The security of elliptic curve cryptography relies on the fact that the discrete logarithm problem is hard to solve. In ECDSA (Elliptic Curve Digital Signature Algorithm) which is used by Bitcoin and Ethereum, the private key is an integer $k$, and the public key is the point $P = kG$. Given the public key $P$ and the generator point $G$, it's computationally infeasible to find the private key $k$. (Note in practice, we don't directly use a public key. We use the hash of the public key as the address.)
