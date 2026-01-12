@@ -1,0 +1,148 @@
+---
+title: R1CS
+description: Introduces Rank-1 Constraint Systems (R1CS) and how to convert arithmetic circuits into R1CS form.
+slug: r1cs
+sidebar:
+  order: 20
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+We already know each problem in NP can be converted into an arithmetic circuit. In a zero-knowledge proof protocol, the goal of the prover is to convince the verifier that they know a witness that satisfies the arithmetic circuit without revealing the witness itself.
+
+However, constraints in an arithmetic circuit can be complex. It can be as simple as $x + y = 8$ or $xy = 15$, and it can also be much more complex like:
+
+$$
+\begin{align*}
+x^2 + y^2 & = z^2 \\
+x^2yz & = 180 \\
+x^3 - 2y + z & = 24
+\end{align*}
+$$
+
+Or even more complex. We need a standard way to express these constraints so that both the prover and verifier can understand them. This is where Rank-1 Constraint Systems (R1CS) comes in.
+
+## Witness Vector
+
+The arithmetic circuit contains many constraints without any format or structure. In the constraint system called Rank-1 Constraint System, each constraint must be in a specific, standardized format.
+
+Before discussing this format, let's see what a witness actually is. In R1CS, a witness is just a vector, with each element representing the value of a variable in the R1CS. For convenience, the first element of the witness vector is always set to constant 1.
+
+IMPORTANT: a variable in the R1CS includes but not limited to all the variables in the original arithmetic circuit. Note we're using pairing $e: G_1 \times G_2 \to G_{12}$, the result is an element in $G_{12}$, which could not be paired again! Each pairing operation corresponds to a multiplication in the constraint. So we sometimes must introduce intermediate variables. For example, if we have a constraint in the original arithmetic circuit $z = x^2y$, we need to introduce an intermediate variable $w = xy$ like the following:
+
+$$
+\begin{align*}
+w &= x^2 \\
+z &= wy
+\end{align*}
+$$
+
+So, the witness vector $\mathbf{a}$ is:
+
+$$
+\mathbf{a} = \begin{bmatrix}1 \\ x \\ y \\ w \\ z \end{bmatrix}
+$$
+
+<Aside>
+  In linear algebra, a vector is usually represented as a column vector like the above. It's essentially a $n \times 1$ matrix. We can also represent it as a row vector like this: $\mathbf{a}^{T} = [1, x, y, w, z]$. The transpose operation $^{T}$ converts a column vector to a row vector.
+
+  For simplicity, we sometimes omit the transpose notation and just write $\mathbf{a} = [1, x, y, w, z]$.
+</Aside>
+
+## R1CS Constraint Format
+
+Now we discuss the standardized format of each constraint in R1CS. Assume the witness vector $\mathbf{a} = [1, a_1, a_2, \ldots, a_{n-1}]$. Each constraint must be in the following form:
+
+$$
+(l_0 + \sum_{j=1}^{n-1} l_j a_j) \cdot (r_0 + \sum_{j=1}^{n-1} r_j a_j) = (o_0 + \sum_{j=1}^{n-1} o_j a_j)
+$$
+
+Or more compactly:
+
+$$
+\langle \mathbf{l}, \mathbf{a} \rangle \cdot \langle \mathbf{r}, \mathbf{a} \rangle = \langle \mathbf{o}, \mathbf{a} \rangle
+$$
+
+Where $\mathbf{l}, \mathbf{r}, \mathbf{o}$ are coefficient vectors, and $\langle \mathbf{l} , \mathbf{a} \rangle$ denotes the inner product (or dot product) of vectors $\mathbf{l}$ and $\mathbf{a}$. 
+
+Take the example $z = x^2y$ again. We've introduced an intermediate variable $w = x^2$, and converted it into two constraints:
+
+$$
+\begin{align*}
+w &= x^2 \\
+z &= wy
+\end{align*}
+$$
+
+For the first constraint $w = x^2$, we can rewrite it in the standard format as:
+
+$$
+(0 + 1 x + 0 y + 0 w + 0 z) \cdot (0 + 1 x + 0 y + 0 w + 0 z) = (0 + 0 x + 0 y + 1 w + 0 z)
+$$
+
+So we have $\mathbf{l} = [0, 1, 0, 0, 0], \mathbf{r} = [0, 1, 0, 0, 0], \mathbf{o} = [0, 0, 0, 1, 0]$.
+
+Similarly, for the second constraint $z = wy$, we can rewrite it as:
+
+$$
+(0 + 0 x + 0 y + 1 w + 0 z) \cdot (0 + 0 x + 1 y + 0 w + 0 z) = (0 + 0 x + 0 y + 0 w + 1 z)
+$$
+
+So we have $\mathbf{l} = [0, 0, 0, 1, 0], \mathbf{r} = [0, 0, 1, 0, 0], \mathbf{o} = [0, 0, 0, 0, 1]$.
+
+## Group All Constraints Together
+
+We've known that for each constraint in R1CS, we have three coefficient vectors $\mathbf{l}, \mathbf{r}, \mathbf{o}$, and the witness vector $\mathbb{a}$ must satisfy $\langle \mathbf{l}, \mathbf{a} \rangle \cdot \langle \mathbf{r}, \mathbf{a} \rangle = \langle \mathbf{o}, \mathbf{a} \rangle$.
+
+Note that inner product $\langle \mathbf{l}, \mathbf{a} \rangle$ could also be written as $\mathbf{l}^T \mathbf{a}$, where $\mathbf{l}^T$ is a row vector (or a $1 \times n$ matrix), and $\mathbf{a}$ is a column vector (or a $n \times 1$ matrix). Their multiplication results in a $1 \times 1$ matrix, which is a scalar.
+
+There are multiple, say $m$, constraints in the R1CS, therefore $m$ sets of coefficient vectors $\mathbf{l_i}, \mathbf{r_i}, \mathbf{o_i}$. We can treat each coefficient vector as a row vector, and group all the coefficient vectors together to form three matrices $\mathbf{L}, \mathbf{R}, \mathbf{O}$, each of size $m \times n$. So the entire R1CS can be represented as:
+
+$$
+\mathbf{L} \mathbf{a} \circ \mathbf{R} \mathbf{a} = \mathbf{O} \mathbf{a}
+$$
+
+where the symbol $\circ$ denotes the Hadamard (element-wise) product between two vectors. Since $\mathbf{L}$ is of size $m \times n$ and $\mathbf{a}$ is of size $n \times 1$, the result $\mathbf{L} \mathbf{a}$ is a vector of size $m \times 1$. So are $\mathbf{R} \mathbf{a}$ and $\mathbf{O} \mathbf{a}$.
+
+We still take the example $z = x^2y$ to illustrate this. We've already known the 2 sets of coefficient vectors of the 2 constraints in last section. We group them together, and represent the R1CS as:
+
+$$
+\begin{bmatrix}
+0 & 1 & 0 & 0 & 0 \\
+0 & 0 & 0 & 1 & 0
+\end{bmatrix}
+
+\begin{bmatrix}
+1 \\ x \\ y \\ w \\ z
+\end{bmatrix}
+
+\circ
+
+\begin{bmatrix}
+0 & 1 & 0 & 0 & 0 \\
+0 & 0 & 1 & 0 & 0
+\end{bmatrix}
+
+\begin{bmatrix}
+1 \\ x \\ y \\ w \\ z
+\end{bmatrix}
+
+=
+
+\begin{bmatrix}
+0 & 0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 0 & 1
+\end{bmatrix}
+
+\begin{bmatrix}
+1 \\ x \\ y \\ w \\ z
+\end{bmatrix}
+$$
+
+There are 2 rows because there are 2 constraints, and 5 columns because there are 5 variables (including the intermediate variable and the constant 1). If we look at each row individually, we can see they correspond to the two constraints we've discussed before.
+
+## Summary
+
+Till now, we have a standard way (i.e., R1CS) to express any arithmetic circuit. We sometimes (honestly, most of the time in real world) need to introduce intermediate variables to break complex constraints in original arithmetic circuit into multiple simple constraints in R1CS specified format. This is because each pairing operation only corresponds to one multiplication in the constraint.
+
+The coefficient matrices $\mathbf{L}, \mathbf{R}, \mathbf{O}$ are public to both the prover and verifier. Now, the prover knows a witness vector $\mathbf{a}$ that satisfies $$\mathbf{L} \mathbf{a} \circ \mathbf{R} \mathbf{a} = \mathbf{O} \mathbf{a}$$, and wants to convince the verifier that they know such a witness without revealing it. In the next posts, we'll go further to see how.
