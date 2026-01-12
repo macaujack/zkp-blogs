@@ -1,0 +1,98 @@
+---
+title: Bilinear Pairing
+description: Introduces what pairing is and how bilinear pairing works.
+slug: bilinear-pairing
+sidebar:
+  order: 10
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Suppose we have two constraints, forming a simultaneous linear equation:
+
+$$
+\begin{align*}
+x + y &= 8 \\
+x + 2y &= 13
+\end{align*}
+$$
+
+The prover wants to convince the verifier that we know $x = 3$ and $y = 5$ without revealing them. One way to do this is to use an elliptic curve. The prover computes $X = xG = 3G$ and $Y = yG = 5G$ (where $G$ is the generator of the elliptic curve group) and sends $X$ and $Y$ to the verifier. The verifier first computes $8G$ and $13G$ themselves, and then checks if:
+
+$$
+\begin{align*}
+X + Y & \overset{?}{=} 8G \\
+X + 2Y & \overset{?}{=} 13G
+\end{align*}
+$$
+
+Since discrete logarithm problem is hard, the verifier cannot easily derive $x$ and $y$ from $X$ and $Y$.
+
+<Aside>
+    This is not zero-knowledge yet. Though the verifier cannot derive $x$ and $y$, they can still guess them. Just like one cannot derive the password from its hash, but can still guess it by brute force. We'll see how to make it zero-knowledge in later posts.
+</Aside>
+
+However, these are **linear** equations. What if we have two constraints like this:
+
+$$
+\begin{align*}
+x + y &= 8 \\
+xy &= 15
+\end{align*}
+$$
+
+The elliptic curve group only supports addition operation. We can't perform multiplication between two points. This is where bilinear pairing comes in handy.
+
+## Bilinear Pairing
+
+Recall that a function $f: A \to B$ is a special kind of relation that maps each element in set $A$ to exactly one element in set $B$.
+
+A bilinear pairing is a function $e: G_1 \times G_2 \to G_T$, where $G_1$, $G_2$, and $G_T$ are groups of the same order. That is, it takes two inputs (one from group $G_1$ and another from group $G_2$) and maps them to an output in group $G_T$. When working with elliptic curves, in general:
+
+- $G_1$ is a (pairing-friendly) elliptic curve group defined over $\mathbb{F}_p$.
+- $G_2$ is also an elliptic curve group, but it's defined over $\mathbb{F}_{p^2}$. Recall that the order of a finite field is always a power of a prime number. So in the case of $\mathbb{F}_{p^2}$, each element in this finite field can be represented as a 2-dimensional vector, where each dimension is an element in $\mathbb{F}_p$.
+- $G_T$ is not an elliptic curve group. Usually it's also denoted as $G_{12}$, because it's a multiplicative subgroup of the finite field extension $\mathbb{F}_{p^{12}}^*$. Each element in this group can be represented as a 12-dimensional vector, where each dimension is an element in $\mathbb{F}_p$. Since $G_{12}$ is a multiplicative group, its group operation is multiplication, i.e., given a generator $g$, the elements in this group are $\{g^0, g^1, g^2, \ldots \}$.
+
+We don't need to know how $G_2$ and $G_{12}$ are constructed, because we don't need to understand the underlying moon math to use bilinear pairings.
+
+If $P \in G_1$ and $Q \in G_2$, then the bilinear pairing $e(P, Q) = R \in G_{12}$. Since it's **bilinear**, given any $a, b \in \mathbb{F}_p$, we have:
+
+$$
+e(aP, bQ) = R^{ab}
+$$
+
+Or equivalently:
+
+$$
+e(aP, bQ) = e(P, Q)^{ab}
+$$
+
+Hence the bilinearity: the output is linear with respect to each input separately.
+
+In Ethereum, the $G_1$ curve used by the precompiled contract (at address 0x8) is BN128 (though the curve used for transaction signing is k-256 as said before). In Zcash, it's BLS12-381.
+
+## Revisit the Example at the Beginning
+
+$$
+\begin{align*}
+x + y &= 8 \\
+xy &= 15
+\end{align*}
+$$
+
+Let's say the generator element of each group is $G_1$, $G_2$, and $G_{12}$ respectively. So we have $e(G_1, G_2) = G_{12}$.
+
+<Aside>
+  As said in previous posts, the symbol $G_1$ sometimes means the group, and sometimes means the generator element of the group. It depends on the context.
+</Aside>
+
+The prover computes $X_1 = xG_1 = 3G_1, Y_1 = yG_1 = 5G_1, Y_2 = yG_2 = 5G_2$, then sends them to the verifier. The verifier computes $8G_1$ and $15G_{12}$ themselves, and then checks if:
+
+$$
+\begin{align*}
+X_1 + Y_1 & \overset{?}{=} 8G_1 \\
+e(X_1, Y_2) & \overset{?}{=} 15G_{12}
+\end{align*}
+$$
+
+As just said, this is not zero-knowledge yet. And this protocol is highly customized for this specific example. In later posts, we'll see how to generalize this to arbitrary computations and make it zero-knowledge.
