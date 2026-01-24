@@ -10,7 +10,7 @@ export default defineConfig({
   base: "/zkp-blogs",
   integrations: [
     starlight({
-      title: "My Docs",
+      title: "ZKP Blogs",
       social: [
         {
           icon: "github",
@@ -52,6 +52,23 @@ export default defineConfig({
               "sha384-2B8pfmZZ6JlVoScJm/5hQfNS2TI/6hPqDZInzzPc8oHpN5SgeNOf4LzREO6p5YtZ",
             crossorigin: "anonymous",
           },
+        },
+        {
+          tag: "script",
+          attrs: {
+            async: true,
+            src: "https://www.googletagmanager.com/gtag/js?id=G-XCZEPWKCB8",
+          },
+        },
+        {
+          tag: "script",
+          content: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-XCZEPWKCB8');
+          `,
         },
       ],
     }),
